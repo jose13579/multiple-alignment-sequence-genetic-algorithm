@@ -5,24 +5,24 @@
 #include <iomanip>
 #include "my_classes.h"
 #include <list>
+#include <cmath>
 
 // TODO MULTI THREAD
-// DEBUG input02.txt: 5. A A A A TT
 
-#define MAX_SIZE 10000
-#define MAX_SEQ 100
+#define MAX_SIZE 1000 + 1
+#define MAX_SEQ 500
 #define SIMILARITY 'S'
 #define DISTANCE 'D'
 #define GAP_C '-'
 
 using namespace std;
 
-int dp[MAX_SIZE+1][MAX_SIZE+1];
+double dp[MAX_SIZE][MAX_SIZE];
 
-char aux1[MAX_SIZE+1], aux2[MAX_SIZE+1];
+char aux1[MAX_SIZE], aux2[MAX_SIZE];
 int aux_size;
 
-char alpha[MAX_SEQ][MAX_SIZE+1];
+char alpha[MAX_SEQ][MAX_SIZE];
 int alpha_len[MAX_SEQ];
 
 int alignment_len;
@@ -30,12 +30,12 @@ int kseq;
 
 Score *score;
 
-inline int MAX(int x, int y, int z) {
+inline double MAX(double x, double y, double z) {
     if(x >= y && x >= z) return x;
     return y >= z ? y : z;
 }
 
-inline int MIN(int x, int y, int z) {
+inline double MIN(double x, double y, double z) {
     if(x <= y && x <= z) return x;
     return y <= z ? y : z;
 }
@@ -101,10 +101,10 @@ void print_alignment() {
     cout << endl;
 }
 
-int needleman_wunsch(char a[], char b[], int alen, int blen) {
-    const int gap = score->getGap();
-    const int match = score->getMatch();
-    const int mismatch = score->getMismatch();
+double needleman_wunsch(char a[], char b[], int alen, int blen) {
+    const double gap = score->getGap();
+    const double match = score->getMatch();
+    const double mismatch = score->getMismatch();
     const char type = score->getType();
 
     for(int i = 1 ; i <= blen ; i++) {
@@ -127,8 +127,7 @@ int needleman_wunsch(char a[], char b[], int alen, int blen) {
     return dp[blen][alen];
 }
 
-void print_star_alignment(char alignment[MAX_SEQ][MAX_SIZE+1], int alignment_len) {
-    
+void print_star_alignment(char alignment[MAX_SEQ][MAX_SIZE], int alignment_len) {
     for(int i = 0 ;i < kseq; i++) {
         for(int j = 0; j < alignment_len; j++) {
             cout << alignment[i][j];
@@ -137,17 +136,36 @@ void print_star_alignment(char alignment[MAX_SEQ][MAX_SIZE+1], int alignment_len
     }
 }
 
-void star_aligment(char alignment[MAX_SEQ][MAX_SIZE+1], int *alignment_len) {
+double score_sp(char alignment[MAX_SEQ][MAX_SIZE], int alignment_len) {
+    double sp = 0;
+    const double match = score->getMatch();
+    const double mismatch = score->getMismatch();
+    const double gap = score->getGap();
+    
+    for(int k = 0; k < alignment_len; k++) {
+        for(int i = 0; i < kseq-1; i++) {
+            for(int j = i+1; j < kseq; j++) {
+                if(alignment[i][k] == alignment[j][k]) sp += match;
+                else if(alignment[i][k] == GAP_C || alignment[j][k] == GAP_C) sp += gap; 
+                else sp += mismatch; 
+            }  
+        }
+    }
+
+    return sp; 
+}
+
+void star_aligment(char alignment[MAX_SEQ][MAX_SIZE], int *alignment_len) {
     list<char> ll_alignment[MAX_SEQ];
-    list<char>::iterator pos[MAX_SEQ];
-    int anchor_score[MAX_SEQ][MAX_SEQ];
-    int anchor_score_sum[MAX_SEQ];
+    list<char>::iterator ll_it[MAX_SEQ];
+    double anchor_score[MAX_SEQ][MAX_SEQ];
+    double anchor_score_sum[MAX_SEQ];
     
     int anchor;
     const char type = score->getType();
     
     // get scores to pick the anchor
-    memset(anchor_score_sum,0,sizeof(anchor_score_sum));
+    memset(anchor_score_sum,0.0,sizeof(anchor_score_sum));
     for(int i = 0; i < kseq; i++) {
         for(int j = i; j < kseq; j++) {
             anchor_score[i][j] = anchor_score[j][i] = (j == i) ? 0 : needleman_wunsch(alpha[i],alpha[j],alpha_len[i],alpha_len[j]);
@@ -170,12 +188,12 @@ void star_aligment(char alignment[MAX_SEQ][MAX_SIZE+1], int *alignment_len) {
     }
     
     // position of current sequence to be added in the linked list
-    int pos_ll = 0;
+    int curr = 0;
     
-    // adds one by one the sequences to the multiple aligment
+    // adds the sequences one by one to the multiple aligment
     for(int i = 0 ; i < kseq; i++) {
         if(i == anchor) continue;
-        pos_ll++;
+        curr++;
         
         needleman_wunsch(alpha[anchor], alpha[i], alpha_len[anchor], alpha_len[i]);
         aux_size = 0;
@@ -183,41 +201,49 @@ void star_aligment(char alignment[MAX_SEQ][MAX_SIZE+1], int *alignment_len) {
         //print_alignment();
         
         // iterators to linkedlist of aligments
-        for(int j = 0; j < pos_ll; j++) {
-            pos[j] = ll_alignment[j].begin();
+        for(int j = 0; j < curr; j++) {
+            ll_it[j] = ll_alignment[j].begin();
         }
         
-        // Implement once a gap, always a gap
+        // Implements once a gap, always a gap
         int k;
-        for(k = aux_size-1; k >=0 && pos[0] != ll_alignment[0].end(); k--) {
-            // do not add a new gap
-            if(*pos[0] == aux1[k] || (*pos[0] != GAP_C && aux1[k] != GAP_C)) {
-                ll_alignment[pos_ll].push_back(aux2[k]);
+        for(k = aux_size-1; k >=0 || ll_it[0] != ll_alignment[0].end(); k--) {
+            if(k < 0) {
+                ll_alignment[curr].push_back(GAP_C);
+                for(int j = 0; j < curr; j++) ll_it[j]++; 
+            }
+            
+            else if(ll_it[0] == ll_alignment[0].end()) {
+                ll_alignment[curr].push_back(aux2[k]);
                 
-                for(int j = 0; j < pos_ll; j++) {
-                    pos[j]++; 
+                // add gap for every sequence already aligned
+                for(int j = 0; j < curr; j++) {
+                    ll_alignment[j].insert(ll_it[j], GAP_C);
                 }
             }
             
-            // gap in sequence already aligned, just add gap to sequence to be added
-            else if(*pos[0] == GAP_C) {
-                ll_alignment[pos_ll].push_back(GAP_C);
+            // do not add a new gap
+            else if(*ll_it[0] == aux1[k] || (*ll_it[0] != GAP_C && aux1[k] != GAP_C)) {
+                ll_alignment[curr].push_back(aux2[k]);
+                for(int j = 0; j < curr; j++) ll_it[j]++;
+            }
+            
+            // gap in sequence already aligned, just add a gap to the sequence to be added
+            else if(*ll_it[0] == GAP_C) {
+                ll_alignment[curr].push_back(GAP_C);
                 k++;
-                
-                for(int j = 0; j < pos_ll; j++) {
-                    pos[j]++;
-                }                
+                for(int j = 0; j < curr; j++) ll_it[j]++;                
             }
             
             else {
-                ll_alignment[pos_ll].push_back(aux2[k]);
+                ll_alignment[curr].push_back(aux2[k]);
                 
                 // add gap for every sequence already aligned
-                for(int j = 0; j < pos_ll; j++) {
-                    ll_alignment[j].insert(pos[j], GAP_C);
+                for(int j = 0; j < curr; j++) {
+                    ll_alignment[j].insert(ll_it[j], GAP_C);
                 }
             }
-        }     
+        }         
     }
     
     // list to array
@@ -231,10 +257,11 @@ void star_aligment(char alignment[MAX_SEQ][MAX_SIZE+1], int *alignment_len) {
 }
 
 int main(void) {
-    char alignment[MAX_SEQ][MAX_SIZE+1];
+    double t_start, t_end;
+    char alignment[MAX_SEQ][MAX_SIZE];
     int alignment_len;
     
-    int m,M,g;
+    double m,M,g;
     char type;
     
     cin >> kseq;
@@ -248,8 +275,14 @@ int main(void) {
     
     score = new Score(type, M, m, g);
     
+    t_start = rtclock();
     star_aligment(alignment, &alignment_len);
-    print_star_alignment(alignment,alignment_len); 
+    t_end = rtclock();
+    
+    cout << "Star Alignment:" << endl;
+    print_star_alignment(alignment,alignment_len);
+    cout << "Score (SP): " << score_sp(alignment,alignment_len) << endl;
+    cout << "Time: " << fixed << setprecision(3) << t_end - t_start << " seconds" << endl;
     
     return 0;
 }
