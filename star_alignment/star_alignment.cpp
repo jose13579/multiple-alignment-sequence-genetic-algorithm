@@ -9,8 +9,8 @@
 
 // TODO MULTI THREAD
 
-#define MAX_SIZE 1000 + 1
-#define MAX_SEQ 500
+#define MAX_SIZE 5000 + 1
+#define MAX_SEQ 100
 #define SIMILARITY 'S'
 #define DISTANCE 'D'
 #define GAP_C '-'
