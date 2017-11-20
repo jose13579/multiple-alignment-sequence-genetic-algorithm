@@ -1,16 +1,10 @@
-#include "my_classes.h"
+#include "functions.h"
 
-Score::Score(char t, double M, double m, double g) {
-    type = t;
+Score::Score(double M, double m, double g) {
     match = M;
     mismatch = m;
     gap = g;
 }
-
-const char Score::getType() {
-    return type;
-}
-
 const double Score::getMatch() {
     return match;
 }
@@ -49,4 +43,22 @@ double score_sp(char alignment[MAX_SEQ][MAX_SIZE], int alignment_len, Score *sco
     }
 
     return sp; 
+}
+
+void print_alignment(char alignment[MAX_SEQ][MAX_SIZE], int alignment_len, int kseq) {
+    for(int i = 0 ;i < kseq; i++) {
+        for(int j = 0; j < alignment_len; j++) {
+            cout << alignment[i][j];
+        }
+        cout << endl;
+    }
+}
+
+void print_alignment(char alignment[MAX_OPT_SEQ][MAX_OPT_SIZE], int alignment_len, int kseq) {
+    for(int i = 0 ;i < kseq; i++) {
+        for(int j = 0; j < alignment_len; j++) {
+            cout << alignment[i][j];
+        }
+        cout << endl;
+    }
 }

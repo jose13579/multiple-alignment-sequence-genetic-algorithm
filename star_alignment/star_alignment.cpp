@@ -1,11 +1,4 @@
-#include <iostream>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <iomanip>
-#include "my_classes.h"
-#include <list>
-#include <cmath>
+#include "functions.h"
 
 // TODO MULTI THREAD
 
@@ -23,16 +16,6 @@ int alignment_len;
 int kseq;
 
 Score *score;
-
-inline double MAX(double x, double y, double z) {
-    if(x >= y && x >= z) return x;
-    return y >= z ? y : z;
-}
-
-inline double MIN(double x, double y, double z) {
-    if(x <= y && x <= z) return x;
-    return y <= z ? y : z;
-}
 
 void print_mat(int mat[MAX_SEQ][MAX_SEQ], int n, int m) {
     for(int i = 0 ; i < n ; i++) {
@@ -83,23 +66,10 @@ void get_alignment(char a[], char b[], int m, int n) {
     }
 }
 
-void print_alignment() {
-    for(int i = aux_size-1; i >=0; i--) {
-        cout << aux1[i] << " " ;        
-    }
-    cout << endl;
-    
-    for(int i = aux_size-1; i >=0; i--) {
-        cout << aux2[i] << " " ;        
-    }
-    cout << endl;
-}
-
 double needleman_wunsch(char a[], char b[], int alen, int blen) {
     const double gap = score->getGap();
     const double match = score->getMatch();
     const double mismatch = score->getMismatch();
-    const char type = score->getType();
 
     for(int i = 1 ; i <= blen ; i++) {
         dp[i][0] = i*gap;
@@ -111,24 +81,14 @@ double needleman_wunsch(char a[], char b[], int alen, int blen) {
 
     for(int i = 1 ; i <= blen ; i++) {
         for(int j = 1 ; j <= alen ; j++) {
-            if(type == SIMILARITY)
-                dp[i][j] = MAX(dp[i-1][j-1]+((a[j-1]==b[i-1])?match:mismatch), dp[i][j-1]+gap ,dp[i-1][j]+gap); 
-            else
-                dp[i][j] = MIN(dp[i-1][j-1]+((a[j-1]==b[i-1])?match:mismatch), dp[i][j-1]+gap, dp[i-1][j]+gap); 
+            dp[i][j] = MIN(dp[i-1][j-1]+((a[j-1]==b[i-1])?match:mismatch), MIN(dp[i][j-1]+gap, dp[i-1][j]+gap)); 
         }        
     }
     
     return dp[blen][alen];
 }
 
-void print_star_alignment(char alignment[MAX_SEQ][MAX_SIZE], int alignment_len) {
-    for(int i = 0 ;i < kseq; i++) {
-        for(int j = 0; j < alignment_len; j++) {
-            cout << alignment[i][j];
-        }
-        cout << endl;
-    }
-}
+
 
 void star_aligment(char alignment[MAX_SEQ][MAX_SIZE], int *alignment_len) {
     list<char> ll_alignment[MAX_SEQ];
@@ -137,7 +97,6 @@ void star_aligment(char alignment[MAX_SEQ][MAX_SIZE], int *alignment_len) {
     double anchor_score_sum[MAX_SEQ];
     
     int anchor;
-    const char type = score->getType();
     
     // get scores to pick the anchor
     memset(anchor_score_sum,0.0,sizeof(anchor_score_sum));
@@ -152,8 +111,7 @@ void star_aligment(char alignment[MAX_SEQ][MAX_SIZE], int *alignment_len) {
     // pick the anchor
     anchor = 0;
     for(int i = 1; i < kseq; i++) {
-        if(type == SIMILARITY) anchor = anchor_score_sum[anchor] >= anchor_score_sum[i] ? anchor : i;
-        else anchor = anchor_score_sum[anchor] <= anchor_score_sum[i] ? anchor : i;
+        anchor = anchor_score_sum[anchor] <= anchor_score_sum[i] ? anchor : i;
     }
     
     // put anchor in the first linked list
@@ -237,8 +195,7 @@ int main(void) {
     int alignment_len;
     
     double m,M,g;
-    char type;
-    
+
     cin >> kseq;
     
     for(int i = 0 ; i < kseq; i++) {
@@ -246,17 +203,17 @@ int main(void) {
         alpha_len[i] = strlen(alpha[i]);
     }
     
-    cin >> type >> M >> m >> g;
+    cin >> M >> m >> g;
     
-    score = new Score(type, M, m, g);
+    score = new Score(M, m, g);
     
     t_start = rtclock();
     star_aligment(alignment, &alignment_len);
     t_end = rtclock();
     
     cout << "Star Alignment:" << endl;
-    print_star_alignment(alignment,alignment_len);
-    cout << "Score (SP): " << score_sp(alignment,alignment_len,score,kseq) << endl;
+    print_alignment(alignment,alignment_len,kseq);
+    cout << "Score (SP) Distance: "  << score_sp(alignment,alignment_len,score,kseq) << endl;
     cout << "Time: " << fixed << setprecision(3) << t_end - t_start << " seconds" << endl;
     
     return 0;
