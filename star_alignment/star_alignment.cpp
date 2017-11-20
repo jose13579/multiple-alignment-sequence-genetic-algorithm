@@ -9,8 +9,6 @@
 
 // TODO MULTI THREAD
 
-
-
 using namespace std;
 
 double dp[MAX_SIZE][MAX_SIZE];

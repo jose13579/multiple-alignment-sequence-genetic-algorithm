@@ -1,7 +1,7 @@
 5
+AAAAAAAAA
+GTT
+AGCACG  
 A
 A
-A
-A
-TT
-S 3 -2 -5
+D 0 5 6.5
