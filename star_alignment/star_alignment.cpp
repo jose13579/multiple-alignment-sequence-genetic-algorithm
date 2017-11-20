@@ -9,11 +9,7 @@
 
 // TODO MULTI THREAD
 
-#define MAX_SIZE 5000 + 1
-#define MAX_SEQ 100
-#define SIMILARITY 'S'
-#define DISTANCE 'D'
-#define GAP_C '-'
+
 
 using namespace std;
 
@@ -134,25 +130,6 @@ void print_star_alignment(char alignment[MAX_SEQ][MAX_SIZE], int alignment_len) 
         }
         cout << endl;
     }
-}
-
-double score_sp(char alignment[MAX_SEQ][MAX_SIZE], int alignment_len) {
-    double sp = 0;
-    const double match = score->getMatch();
-    const double mismatch = score->getMismatch();
-    const double gap = score->getGap();
-    
-    for(int k = 0; k < alignment_len; k++) {
-        for(int i = 0; i < kseq-1; i++) {
-            for(int j = i+1; j < kseq; j++) {
-                if(alignment[i][k] == alignment[j][k]) sp += match;
-                else if(alignment[i][k] == GAP_C || alignment[j][k] == GAP_C) sp += gap; 
-                else sp += mismatch; 
-            }  
-        }
-    }
-
-    return sp; 
 }
 
 void star_aligment(char alignment[MAX_SEQ][MAX_SIZE], int *alignment_len) {
@@ -281,7 +258,7 @@ int main(void) {
     
     cout << "Star Alignment:" << endl;
     print_star_alignment(alignment,alignment_len);
-    cout << "Score (SP): " << score_sp(alignment,alignment_len) << endl;
+    cout << "Score (SP): " << score_sp(alignment,alignment_len,score,kseq) << endl;
     cout << "Time: " << fixed << setprecision(3) << t_end - t_start << " seconds" << endl;
     
     return 0;

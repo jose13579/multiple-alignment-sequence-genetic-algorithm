@@ -1,0 +1,7 @@
+5
+---ATCCAATTTT	
+---ATCTTCTT--	
+-ATTGCCATT---
+-ATGGCCATT---
+ACTGACC------	
+D 0 5 6.5

@@ -1,31 +1,33 @@
-#include <iostream>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <iomanip>
+
 #include "my_classes.h"
-#include <cmath>
-#include <cfloat>
 
 using namespace std;
 
-#define MAX_SIZE 11 + 1
-#define SIMILARITY 'S'
-#define DISTANCE 'D'
-#define GAP_C '-'
+#define MAX_OPT_SIZE 30 + 1
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) > (y)) ? (x) : (y))
 
 const int kseq = 5;
-const double N_INFINITY = DBL_MIN/2;
-double dp[MAX_SIZE][MAX_SIZE][MAX_SIZE][MAX_SIZE][MAX_SIZE];
-char alpha[kseq][MAX_SIZE];
+const double INF = 0x3f3f3f3f / 5;
+double dp[MAX_OPT_SIZE][MAX_OPT_SIZE][MAX_OPT_SIZE][MAX_OPT_SIZE][MAX_OPT_SIZE];
+char alpha[kseq][MAX_OPT_SIZE];
 int alpha_len[kseq];
 
 Score *score;
 
 double sp_column(char col[]) {
-    double sp = 0;
+    bool only_gap = true;
+    
+    for(int i = 0; i < kseq; i++) {
+        if(col[i] != GAP_C) {
+            only_gap = false;
+            break;
+        }
+    }
+    
+    if(only_gap) return 0;
+    
+    double sp = 0.0;
     const double match = score->getMatch();
     const double mismatch = score->getMismatch();
     const double gap = score->getGap();
@@ -41,39 +43,46 @@ double sp_column(char col[]) {
     return sp;
 }
 
-double opt5(int id[5]) {
-    if(dp[id[0]][id[1]][id[2]][id[3]][id[4]] != N_INFINITY) return dp[id[0]][id[1]][id[2]][id[3]][id[4]];
+double inline MIN_MAX(double x, double y) {
+    if(score->getType() == DISTANCE) return x <= y ? x : y;
+    return x >= y ? x : y;
+}
+
+double opt5(int a, int b, int c, int d, int e) {
+    const char type = score->getType();
+    char col[kseq];
     
-    char col[5];
-    int id2[5];
+    dp[0][0][0][0][0] = 0;
     
-    for(int bitmask = 1 ; bitmask < (1 << 5); bitmask++) {
-        bool call_rec = true;
-        
-        for(int j = 0 ; j < 5; j++) {
-            if(bitmask & (1 << j) && id[j] > 0) {
-                 col[j] = alpha[j][id[j]-1];
-                 id2[j] = id[j]-1;
-             }
-            else {
-                col[j] = GAP_C;
-                id2[j] = id[j];
-                if(id[j] == 0) call_rec = false;
+    for(int i = 0; i <= a ; i++) {
+        for(int j = 0; j <= b ; j++) {
+            for(int k = 0; k <= c ; k++) {
+                for(int l = 0; l <= d ; l++) {
+                    for(int m = 0; m <= e ; m++) {
+                        if(i == 0 && j == 0 && k == 0 && l == 0 && m == 0) continue;
+                        
+                        dp[i][j][k][l][m] = ((type == DISTANCE) ? (INF) : (-1*INF));
+                        
+                        for(int bitmask = 1; bitmask < (1 << 5); bitmask++) {
+                            int x[kseq] = {i,j,k,l,m};
+                            for(int n = 0; n < kseq; n++) {
+                                if(bitmask & (1 << n) && x[n] > 0){
+                                     col[n] = alpha[n][x[n]-1];
+                                     x[n] -= 1;
+                                 }
+                                else col[n] = GAP_C; 
+                            }
+                            
+                            dp[i][j][k][l][m] = MIN_MAX(dp[i][j][k][l][m], dp[x[0]][x[1]][x[2]][x[3]][x[4]] + sp_column(col));  
+                        }
+                    }
+                }
             }
         }
-        
-        if(score->getType() == SIMILARITY)
-            dp[id[0]][id[1]][id[2]][id[3]][id[4]] = 
-                MAX(dp[id[0]][id[1]][id[2]][id[3]][id[4]],
-                (call_rec ? opt5(id2) : 0)+ sp_column(col));
-        else
-            dp[id[0]][id[1]][id[2]][id[3]][id[4]] = 
-                MIN(dp[id[0]][id[1]][id[2]][id[3]][id[4]],
-                (call_rec ? opt5(id2) : 0)+ sp_column(col));
-        
+ 
     }
     
-    return dp[id[0]][id[1]][id[2]][id[3]][id[4]];
+    return dp[a][b][c][d][e];
 }
 
 
@@ -92,26 +101,9 @@ int main(void) {
     score = new Score(type, M, m, g);
     
     t_start = rtclock(); 
-       
-    for(int i = 0; i < MAX_SIZE; i++) {
-        for(int j = 0; j < MAX_SIZE; j++) {
-            for(int k = 0; k < MAX_SIZE; k++) {
-                for(int l = 0; l < MAX_SIZE; l++) {
-                    for(int m = 0; m < MAX_SIZE; m++) {
-                        dp[i][j][k][l][m] = N_INFINITY;
-                    }
-                }
-            }
-        }
-    }
-    
-    dp[0][0][0][0][0] = 0;
-    
-    int id[5] = {alpha_len[0],alpha_len[1],alpha_len[2],alpha_len[3],alpha_len[4]};
-    
-    double sp = opt5(id);
+    double sp = opt5(alpha_len[0],alpha_len[1],alpha_len[2],alpha_len[3],alpha_len[4]);
     t_end = rtclock();
-    
+
     cout << "Optimal Alignment of 5 sequences:" << endl;
     cout << "Score (SP): " << sp << endl;
     cout << "Time: " << fixed << setprecision(3) << t_end - t_start << " seconds" << endl;
