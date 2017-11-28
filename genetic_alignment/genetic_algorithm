@@ -1,0 +1,639 @@
+#include "functions.h"
+#include <list>
+#include <math.h>  
+#include <vector>  
+#include <algorithm>
+#include <string>
+// TODO MULTI THREAD
+
+using namespace std;
+
+double dp[MAX_SIZE][MAX_SIZE];
+
+//char aux1[MAX_SIZE], aux2[MAX_SIZE];
+int aux_size;
+
+//char alpha[MAX_SEQ][MAX_SIZE];
+//int alpha_len[MAX_SEQ];
+
+vector<string> alpha;
+vector<int> alpha_len;
+vector< pair< int,vector<string> > > population;
+
+int alignment_len = 0;
+int kseq;
+
+//por recomendaçao do paper o valor do mehlor fator pode ser entre 1.2 a 1.5
+float fator = 1.2;
+int populationSize = 20;
+int generations = 200;
+float horizontal_crossover = 0.3;
+float vertical_crossover = 0.9;
+float crossover_ratio = 0.8;
+float mutation_ratio = 0.3; 
+float elitism_rate = 0.2;
+
+Score *score;
+
+vector<int> randomgenerator(int size, int new_size,int pseudo){
+	std::vector<int> question_numbers;
+	for (unsigned int i = 0; i < new_size; ++i)
+   		 question_numbers.push_back(i);
+	srand(pseudo*populationSize);
+	std::random_shuffle(question_numbers.begin(), 	question_numbers.end());
+
+	std::vector<int> resize_question_numbers;
+	for (unsigned int i = 0; i < size; ++i)
+   		 resize_question_numbers.push_back(question_numbers[i]);
+    
+	return resize_question_numbers;
+	
+}
+
+string get_permutation(string i_sequence,int alignment_size,int new_alignment_size, int pseudo)
+{
+	cout<<"PERMUTATION"<<endl;
+	vector<char> sequence_sorted(new_alignment_size,'-');
+
+	std::vector<int> sequence_permutation = randomgenerator(alignment_size,new_alignment_size,pseudo);
+
+	sort(sequence_permutation.begin(), sequence_permutation.end());
+	
+	
+	for(int i = 0; i<alignment_size; i++)
+		sequence_sorted[sequence_permutation[i]] = i_sequence[i];
+
+	string s_sequence_sorted = "";
+	for(int i = 0; i<new_alignment_size; i++)
+		s_sequence_sorted += sequence_sorted[i];
+
+	//return sorted positions
+	return s_sequence_sorted;
+}
+
+string add_gaps_end(string sequence, int max_size_sequence)
+{
+	cout<<"ADD GAPS END"<<endl;
+	for(int i = 0;i<max_size_sequence;i++)
+		sequence += "-";
+	return sequence;
+}
+
+string add_gaps_begin(string sequence, int max_size_sequence)
+{
+	cout<<"ADD GAPS BEGIN"<<endl;
+	string gaps_sequence = "";
+	for(int i = 0;i<max_size_sequence;i++)
+		gaps_sequence += "-";
+	sequence = gaps_sequence+sequence;
+	return sequence;
+}
+
+vector<string> mutation_remove_column(vector<string> individual)
+{
+	cout<<"MUTATION REMOVE COLUMN"<<endl;
+	string tempSequence;
+	bool bAllGaps;
+	string temp;
+	string newSequence;
+	vector<string> individual_rcolumn;
+
+	for (int c=individual[0].size()-1; c>=0; c--)
+	{			
+		bAllGaps = true;
+		for (int s=0; s<individual.size(); s++)
+		{
+			tempSequence = individual[s];
+			if (tempSequence[c] != '-')
+			{
+				bAllGaps = false;
+				break;
+			}
+		}
+		
+		if (bAllGaps)
+		{				
+			for (int s=0; s<individual.size(); s++)
+			{						
+				temp = individual[s];
+				newSequence = temp.substr(0,c) + temp.substr(c+1);
+				cout<<newSequence<<endl;
+				// set the sequence back in the alignment
+				individual_rcolumn.push_back(newSequence);
+			}
+		}
+	}
+	
+	return individual_rcolumn;
+}
+
+vector<string> mutation_add_gap(vector<string> individual1)
+{
+	cout<<"MUTATION ADD GAP"<<endl;
+	vector<string>	individual_addgap;
+	srand((unsigned)(time(NULL)));
+	for (int i=0; i<individual1.size(); i++)
+	{
+		string sequence = individual1[i];
+		int gapPosition = rand()%sequence.size();
+		string beforeGap = sequence.substr(0,gapPosition);
+		string afterGap = sequence.substr(gapPosition+1);
+		string new_sequence = beforeGap + "-" + afterGap;
+		individual_addgap.push_back(new_sequence);
+	}
+
+	for(int i = 0;i<individual_addgap.size();i++)
+		cout<<individual_addgap[i]<<endl;
+	
+	return individual_addgap;	
+}
+
+vector<string> mutation_remove_gap(vector<string> individual1)
+{
+	cout<<"MUTATION REMOVE GAP"<<endl;
+	string seq;
+	string beforeGap;
+	string afterGap;
+	int pos = 0;
+	int gapIndex = 0;
+	
+	vector<string>	individual_removegap;
+ 
+	//For each sequence, delete a gap
+	for(int i=0; i<individual1.size(); i++)
+	{
+		seq = individual1[i];
+		
+		string::size_type gapIndex = seq.find('-');
+
+		if (gapIndex == -1)
+			return individual1;
+		
+		string beforeGap = seq.substr(0,gapIndex);
+		string afterGap = seq.substr(gapIndex+1);
+		string new_sequence = beforeGap + afterGap;
+		individual_removegap.push_back(new_sequence);
+	}
+	
+	for(int i = 0;i<individual_removegap.size();i++)
+		cout<<individual_removegap[i]<<endl;
+
+	return individual_removegap;	
+}
+
+vector<string> mutation(vector<string> individual1)
+{	
+	cout<<"MUTATION"<<endl;
+	srand((unsigned)(time(NULL)));
+	float add_gapp_ratio = (float)(rand())/(float)(RAND_MAX);
+	//cout<<"add_gapp_ratiol: "<<add_gapp_ratio<<endl;
+
+	vector<string> individual_mutation;
+	if(add_gapp_ratio <= 0.5)
+		individual_mutation = mutation_add_gap(individual1);
+	
+	else
+	{
+		float remove_gapp_ratio = (float)(rand())/(float)(RAND_MAX);
+		if(remove_gapp_ratio <= 0.5)
+			individual_mutation = mutation_remove_gap(individual1);
+
+		else
+		{
+		
+			float remove_column_ratio = (float)(rand())/(float)(RAND_MAX);
+			if(remove_column_ratio <= 0.5)
+				individual_mutation = mutation_remove_gap(individual1);
+			else
+				individual_mutation = individual1;
+		}
+	}
+	population.push_back(std::make_pair(0,individual_mutation));
+}
+
+
+string replace(string word, string target, string replacement){
+    int len, loop=0;
+    string nword="", let;
+    len=word.length();
+    len--;
+    while(loop<=len){
+        let=word.substr(loop, 1);
+        if(let==target){
+            nword=nword+replacement;
+        }else{
+            nword=nword+let;
+        }
+        loop++;
+    }
+    return nword;
+
+}
+
+void crossover(vector<string> individual1, vector<string> individual2)
+{
+	cout<<"CROSSOVER"<<endl;
+	srand((unsigned)(time(NULL)));
+	float horizontal_ratio = (float)(rand())/(float)(RAND_MAX);
+	cout<<"rand horizontal: "<<horizontal_ratio<<endl;
+	if(horizontal_ratio <= horizontal_crossover)
+	{
+		vector<string> new_individual1;
+		vector<string> new_individual2;
+
+		int random_horizontal = (rand()%(kseq-1))+1;
+		cout<<"random_horizontal: "<<random_horizontal<<endl;
+
+		for(int i = 0; i<random_horizontal;i++)
+		{
+			new_individual1.push_back(individual1[i]);
+			new_individual2.push_back(individual2[i]);
+		}
+
+		for(int i = random_horizontal; i<kseq;i++)
+		{
+			new_individual2.push_back(individual1[i]);
+			new_individual1.push_back(individual2[i]);
+		}
+
+		float indiv1_mutation_ratio = (float)(rand())/(float)(RAND_MAX);
+		if(indiv1_mutation_ratio<= mutation_ratio)
+			mutation(new_individual2);
+		else
+			population.push_back(std::make_pair(0,new_individual2));
+
+		float indiv2_mutation_ratio = (float)(rand())/(float)(RAND_MAX);
+		if(indiv2_mutation_ratio<= mutation_ratio)
+			mutation(new_individual1);
+		else
+			population.push_back(std::make_pair(0,new_individual1));
+	}
+
+	else{
+		float vertical_ratio = (float)(rand())/(float)(RAND_MAX);
+		cout<<"rand vertical: "<<vertical_ratio<<endl;
+		if(vertical_ratio <= vertical_crossover)
+		{
+
+			int min_size = MAX_SIZE;
+
+			for(int i=0; i<individual1.size();i++)
+			{
+				string min_individual = replace(individual1[i],"-", "");
+				if(min_individual.size() <= min_size)
+					min_size = min_individual.size();
+			}
+	
+			vector<string> new_individual1;
+			vector<string> new_individual2;
+
+			vector<string> new_individual1_left;
+			vector<string> new_individual1_right;
+			vector<string> new_individual2_left;
+			vector<string> new_individual2_right;
+
+			int random_vertical= (rand()%individual1.size())+1;
+			cout<<"random_vertical: "<<random_vertical<<endl;
+
+			int max_size_new_seq_indiv1_left = 0;
+			int max_size_new_seq_indiv1_right = 0;
+			int max_size_new_seq_indiv2_left = 0;
+			int max_size_new_seq_indiv2_right = 0;
+		
+			for(int i = 0;i<kseq;i++)
+			{
+				string seq_indiv1 = individual1[i];
+				string seq_indiv2 = individual2[i];
+				int size_seq_indiv1 = 0;
+				string new_seq_indiv1_left = "";
+				string new_seq_indiv1_right = "";
+
+				int size_seq_indiv2 = 0;
+				string new_seq_indiv2_left = "";
+				string new_seq_indiv2_right = "";
+			
+				for(int i = 0;i<seq_indiv1.size();i++)
+				{
+					if(size_seq_indiv1<random_vertical)
+					{	
+						if(seq_indiv1[i]!='-')
+							size_seq_indiv1 += 1;
+						new_seq_indiv1_left += seq_indiv1[i];
+					}
+					else
+						new_seq_indiv1_right += seq_indiv1[i];
+				}
+
+				for(int i = 0;i<seq_indiv2.size();i++)
+				{
+					if(size_seq_indiv2<random_vertical)
+					{
+						if(seq_indiv2[i]!='-')
+							size_seq_indiv2 += 1;
+						new_seq_indiv2_left += seq_indiv2[i];
+					}
+					else
+						new_seq_indiv2_right += seq_indiv2[i];
+				}
+
+				new_individual1_left.push_back(new_seq_indiv1_left);
+				new_individual1_right.push_back(new_seq_indiv1_right);
+				new_individual2_left.push_back(new_seq_indiv2_left);
+				new_individual2_right.push_back(new_seq_indiv2_right);
+			
+			}
+
+			for(int i = 0;i<new_individual1_left.size();i++)
+			{
+				if(max_size_new_seq_indiv1_left<new_individual1_left[i].size())
+					max_size_new_seq_indiv1_left = new_individual1_left[i].size();
+			}
+
+			for(int i = 0;i<new_individual1_right.size();i++)
+			{
+				if(max_size_new_seq_indiv1_right<new_individual1_right[i].size())
+					max_size_new_seq_indiv1_right = new_individual1_right[i].size();
+			}
+	
+			for(int i = 0;i<new_individual2_left.size();i++)
+			{
+				if(max_size_new_seq_indiv2_left<new_individual2_left[i].size())
+					max_size_new_seq_indiv2_left = new_individual2_left[i].size();
+			}
+		
+			for(int i = 0;i<new_individual2_right.size();i++)
+			{
+				if(max_size_new_seq_indiv2_right<new_individual2_right[i].size())
+					max_size_new_seq_indiv2_right = new_individual2_right[i].size();
+			}
+		
+			//add gaps begin and end
+			vector<string> gaps_new_individual1_left;
+			vector<string> gaps_new_individual1_right;
+			vector<string> gaps_new_individual2_left;
+			vector<string> gaps_new_individual2_right;
+
+			for(int i = 0;i<new_individual1_left.size();i++)
+			{
+				string sequence_individual_left = "";
+				if(new_individual1_left[i].size()<max_size_new_seq_indiv1_left)
+					sequence_individual_left = add_gaps_end(new_individual1_left[i],max_size_new_seq_indiv1_left-new_individual1_left[i].size());
+				else
+					sequence_individual_left = new_individual1_left[i];
+				gaps_new_individual1_left.push_back(sequence_individual_left);
+			}
+
+			for(int i = 0;i<new_individual1_right.size();i++)
+			{
+				string sequence_individual_right = "";
+				if(new_individual1_right[i].size()<max_size_new_seq_indiv1_right)
+					sequence_individual_right = add_gaps_begin(new_individual1_right[i],max_size_new_seq_indiv1_right-new_individual1_right[i].size());
+				else
+					sequence_individual_right = new_individual1_right[i];
+				gaps_new_individual1_right.push_back(sequence_individual_right);
+			}
+
+			for(int i = 0;i<new_individual2_left.size();i++)
+			{
+				string sequence_individual_left = "";
+				if(new_individual2_left[i].size()<max_size_new_seq_indiv2_left)
+					sequence_individual_left = add_gaps_end(new_individual2_left[i],max_size_new_seq_indiv2_left-new_individual2_left[i].size());
+				else
+					sequence_individual_left = new_individual2_left[i];
+				gaps_new_individual2_left.push_back(sequence_individual_left);
+			}
+
+			for(int i = 0;i<new_individual2_right.size();i++)
+			{
+				string sequence_individual_right = "";
+				if(new_individual2_right[i].size()<max_size_new_seq_indiv2_right)
+					sequence_individual_right = add_gaps_begin(new_individual2_right[i],max_size_new_seq_indiv2_right-new_individual2_right[i].size());
+				else
+					sequence_individual_right = new_individual2_right[i];
+				gaps_new_individual2_right.push_back(sequence_individual_right);
+			}
+
+			//add offprint1 and offprint2 to population
+			//offprint2
+			for(int i = 0; i<gaps_new_individual1_left.size();i++)
+			{
+				string sequ_offprint2 = gaps_new_individual1_left[i]+gaps_new_individual2_right[i];
+				new_individual1.push_back(sequ_offprint2);
+			}
+
+			//offprint1
+			for(int i = 0; i<gaps_new_individual2_left.size();i++)
+			{
+				string sequ_offprint1 = gaps_new_individual2_left[i]+gaps_new_individual1_right[i];
+				new_individual1.push_back(sequ_offprint1);
+			}
+
+			//mutation
+			float indiv1_mutation_ratio = (float)(rand())/(float)(RAND_MAX);
+			if(indiv1_mutation_ratio<= mutation_ratio)
+				mutation(new_individual2);
+			else
+				population.push_back(std::make_pair(0,new_individual2));
+
+			float indiv2_mutation_ratio = (float)(rand())/(float)(RAND_MAX);
+			if(indiv2_mutation_ratio<= mutation_ratio)
+				mutation(new_individual1);
+			else
+				population.push_back(std::make_pair(0,new_individual1));
+		}
+		else
+		{
+			population.push_back(std::make_pair(0,individual1));
+			population.push_back(std::make_pair(0,individual2));
+		}
+	}
+}
+
+
+int score_sum_of_pairs(vector<int> pairs)
+{
+	int score_pairs = 0;
+	for(int i = 0;i<pairs.size()-1;i++)
+	{
+		for(int j = i+1;j<pairs.size();j++)
+		{
+			if(pairs[i] != pairs[j])	
+			{
+				if(pairs[i] == '-' || pairs[i] == '-')
+					score_pairs += score->getMismatch();
+				else
+					score_pairs += score->getGap();
+			}
+		}
+	}
+	return score_pairs;
+}
+
+int sum_of_pairs(vector<string> individual) 
+{
+	int score_pairs = 0;
+
+	int max_size = individual.size();
+	int max_sequence = individual[0].size();
+	vector<int> columns;
+	
+	for(int i = 0;i<max_sequence;i++)
+	{
+		for(int j = 0; j<max_size;j++)
+		{
+			string sequence = individual[j];
+			columns.push_back(sequence[i]);
+		}
+		score_pairs += score_sum_of_pairs(columns);
+		columns.clear();
+	}
+
+	return score_pairs;
+}
+
+void fitness()
+{
+	vector<string> individual;
+	vector<int> score;
+
+	for(int i = 0; i<population.size();i++)
+	{
+		individual =  population[i].second;
+		population[i].first = sum_of_pairs(individual);
+		cout<<"population[i].first "<<population[i].first<<endl;
+	}
+}
+
+int clustal()
+{
+	string str[kseq] = {"--ATGATT","TAATCAT-","TAATCAA-","--ATCAA-","--ATCA--"};
+	vector<string>  individual_objetive;
+	for(int i = 0; i<kseq;i++)
+		individual_objetive.push_back(str[i]);
+	return sum_of_pairs(individual_objetive);
+
+}
+
+bool evaluateFitness(int objectiveFitness, int ind_individualFitness)
+{
+	for(int i = 0;i<population.size();i++)
+	{
+		int individualFitness = population[i].first;
+		ind_individualFitness = i;
+		cout<<"individualFitness"<<individualFitness<<"objectiveFitness"<<objectiveFitness<<endl;
+		if(individualFitness <= objectiveFitness)
+			return true;
+	}
+	return false;
+}
+
+void generateInitialPopulation()
+{
+	int max_sequence_size = 0;
+	for(int i = 0; i <kseq; i++ )
+	{
+		if(alpha_len[i]>max_sequence_size)
+			max_sequence_size = alpha_len[i];
+	}
+	
+	
+	// create a new sequence length based on the given percentage
+	int new_alignment_size = 0;
+
+	new_alignment_size = ceil(max_sequence_size *fator);
+	cout<< max_sequence_size << " "<<fator<<" "<< new_alignment_size << endl;
+
+	string permutation;
+	
+	// create the population
+	for(int j = 0; j<populationSize;j++)
+	{
+		vector<string> l_permutation;
+		srand((unsigned)(time(NULL)));
+		for (int i=0; i<kseq; i++)
+		{
+			permutation = get_permutation(alpha[i],alpha_len[i],new_alignment_size,j);
+			cout << permutation;
+			cout<<endl;
+			l_permutation.push_back(permutation);
+		}
+		cout<<endl;
+		population.push_back(std::make_pair(0,l_permutation));
+	}
+}
+
+void elitism()
+{
+	sort(population.begin(), population.end());
+	vector< pair< int, vector<string> > > best_population;
+	vector< pair< int, vector<string> > > wortst_population;
+
+	for(int i = 0; i<elitism_rate*populationSize;i++)
+		best_population.push_back(std::make_pair(population[i].first,population[i].second));
+
+	for(int i = elitism_rate*populationSize; i<populationSize;i++)
+		wortst_population.push_back(std::make_pair(population[i].first,population[i].second));
+
+	population.clear();
+
+	//new population	
+	population = best_population;
+	cout<< "population.size(): " <<population.size()<<endl;
+	srand((unsigned)(time(NULL)));
+	for(int i = 0; i<int(wortst_population.size()/2);i++)
+	{
+		vector<string> first_worst_individual = wortst_population[2*i].second;
+
+		vector<string> second_worst_individual = wortst_population[2*i+1].second;
+		float indiv_crossover_ratio = (float)(rand())/(float)(RAND_MAX);
+		cout<< "indiv_crossover_ratio: " <<indiv_crossover_ratio<<endl;
+
+		crossover(first_worst_individual,second_worst_individual);
+	}	
+}
+
+
+int main(void) {
+    double t_start, t_end;
+	vector<string> alignment;
+    int alignment_len;
+    string sequence;
+
+    double m,M,g;
+
+    cin >> kseq;
+    
+    for(int i = 0 ; i < kseq; i++) {
+        cin >> sequence;
+		alpha.push_back(sequence);
+        alpha_len.push_back(sequence.size());
+    }
+    
+    cin >> M >> m >> g;
+    
+    score = new Score(M, m, g);
+
+	int objetive_function = clustal();
+	cout<<"objetive_function "<<objetive_function<<endl;
+    generateInitialPopulation();
+
+	int stop = 0;
+	while(stop<generations)
+	{
+		fitness();
+
+		int indx_fitnessindividual;
+		if(evaluateFitness(objetive_function,indx_fitnessindividual))
+		{
+			int best_fitness = population[indx_fitnessindividual].first;
+
+			cout<<"best fitness: "<<best_fitness<<endl;
+			break;
+			
+		}
+
+		elitism();
+		stop += 1;
+	}
+    return 0;
+};
