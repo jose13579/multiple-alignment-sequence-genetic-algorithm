@@ -718,7 +718,7 @@ int evaluateFitness(int objectiveFitness)
 		int ind_individualFitness = i;
 		cout<<"ind_individualFitness: "<<ind_individualFitness<<endl;
 		cout<<"individual Fitness: "<<individualFitness<<" objectiveFitness: "<<objectiveFitness<<endl;
-		if(individualFitness < objectiveFitness)
+		if(individualFitness <= objectiveFitness)
 			return i;
 	}
 	return 0;
