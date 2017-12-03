@@ -1,0 +1,7 @@
+5
+ATCG
+ACTG
+AGCT
+ACGT
+ATGC
+0 1 1
