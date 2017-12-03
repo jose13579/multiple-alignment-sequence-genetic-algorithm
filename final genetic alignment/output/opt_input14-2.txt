@@ -1,0 +1,9 @@
+TA-C-GTACGT-A
+-ATCAGTA-GT-A
+-ATC---A-GTAA
+TA-C-GTA-CTAA
+-ATC-ATA-GT-A
+-ATC---C-GT-A
+Optimal Alignment of 6 sequences:
+Score (SP) Distance: 63
+Time: 34.491 seconds

@@ -1,0 +1,11 @@
+GCCT-T-A
+-CGA-TTA
+-AAACT--
+-TGA-TCG
+-AGC-T-A
+-C-A-T--
+TCGA-G--
+-CTA-G--
+Optimal Alignment of 8 sequences:
+Score (SP) Distance: 116
+Time: 294.431 seconds

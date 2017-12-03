@@ -1,0 +1,40 @@
+-ATG-ATGACTA-
+-ATGCATG-C-AT
+-A---ATGACTA-
+AATC-ATG-C-AT
+-ATG-AT-ACTA-
+-ATG-C---CTA-
+Algorithm genetic Alignment:
+100 GENERATIONS --------------------------------
+200 GENERATIONS --------------------------------
+300 GENERATIONS --------------------------------
+400 GENERATIONS --------------------------------
+500 GENERATIONS --------------------------------
+600 GENERATIONS --------------------------------
+700 GENERATIONS --------------------------------
+800 GENERATIONS --------------------------------
+900 GENERATIONS --------------------------------
+1000 GENERATIONS --------------------------------
+Time: 18.020 seconds
+Number of Generations: 1000
+==================================================
+==================================================
+MSA star alignment
+-ATG-ATGACTA-
+-ATGCATG-C-AT
+-A---ATGACTA-
+AATC-ATG-C-AT
+-ATG-AT-ACTA-
+-ATG-C---CTA-
+Score (SP) Distance: 67
+==================================================
+MSA genetic algorithm
+ATG-ATGACTA
+ATG-CATGCAT
+AATG---ACTA
+AAT-CATGCAT
+ATG-A-TACTA
+AT-GCCTA---
+Score (SP) Distance: 76
+==================================================
+==================================================

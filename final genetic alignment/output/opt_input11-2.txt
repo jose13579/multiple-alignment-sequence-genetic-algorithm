@@ -1,0 +1,8 @@
+AGTCG-T-A---A
+A-TCG---A-T-C
+A-CCGTTGA-T-T
+--TCGTTTA-A-A
+A--CG-T-ACTGA
+Optimal Alignment of 5 sequences:
+Score (SP) Distance: 54
+Time: 1.165 seconds

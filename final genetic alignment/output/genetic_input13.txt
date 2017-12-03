@@ -1,0 +1,21 @@
+AGAAA-GTTTAGCCAGGGTTTTAATTTAATGG
+AGTCGTGTAGCGGGAGGGGTTTCAATTTAATG
+GGAAG-TTAGAGGGGGGGTTTTACTA-AAT-G
+Algorithm genetic Alignment:
+==================================================
+==================================================
+MSA Star Alignment
+AGAAA-GTTTAGCCAGGGTTTTAATTTAATGG
+AGTCGTGTAGCGGGAGGGGTTTCAATTTAATG
+GGAAG-TTAGAGGGGGGGTTTTACTA-AAT-G
+Score (SP) Distance: 271
+==================================================
+MSA Genetic Algorithm
+AGA--AA-GTTTA--GCCAGGG--TTTT-AATT-TAATGG
+AGT--CGTGTAGCGG--GAGGGGT-T-TCAA-TTTAATG-
+GG-AAG-T--TAGA-GGGG-G-GGTTTT-A-CTA-AAT-G
+Best Score (SP) Distance: 264
+==================================================
+==================================================
+Time: 0.044 seconds
+Number of Generations: 1

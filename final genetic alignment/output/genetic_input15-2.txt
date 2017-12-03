@@ -1,0 +1,36 @@
+--T-A-C--
+A-T-TCCG-
+ATT-AGC--
+--TCA-AA-
+GCT-A-GT-
+----ATCGA
+--G-AGCT-
+--G-ATC--
+Algorithm genetic Alignment:
+==================================================
+==================================================
+MSA Star Alignment
+--T-A-C--
+A-T-TCCG-
+ATT-AGC--
+--TCA-AA-
+GCT-A-GT-
+----ATCGA
+--G-AGCT-
+--G-ATC--
+Score (SP) Distance: 127
+==================================================
+MSA Genetic Algorithm
+TA--C-
+ATTCCG
+ATTAGC
+TCAAA-
+GCTAGT
+-ATCGA
+GA-GCT
+GAT-C-
+Best Score (SP) Distance: 126
+==================================================
+==================================================
+Time: 0.883 seconds
+Number of Generations: 45

@@ -1,0 +1,8 @@
+----ACGATC-GAT-CGAGCTCGTAGCAT-GTA
+ATTTAC-A-C-CATACTAA-AC-TATCTT-TTG
+-----C---C-CA--C-AA-TT-TAAAAT-TT-
+-----C---C-CGT-GGTG-TG-TGTTTTAAAA
+----AC-A-CACAC-CCCCCAC-ACACACCCCA
+Optimal Alignment of 5 sequences:
+Score (SP) Distance: 176
+Time: 117.463 seconds

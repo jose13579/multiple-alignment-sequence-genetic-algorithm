@@ -1,0 +1,8 @@
+A--GTCGTAA
+A---TCGATC
+ACCGTTGATT
+T-CGTTTAAA
+A-CGTACTGA
+Optimal Alignment of 5 sequences:
+Score (SP) Distance: 178
+Time: 1.161 seconds
