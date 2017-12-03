@@ -56,7 +56,7 @@ void print_alignment(char alignment[MAX_SEQ][MAX_SIZE], int alignment_len, int k
 
 void print_alignment(char alignment[MAX_OPT_SEQ][MAX_OPT_SIZE], int alignment_len, int kseq) {
     for(int i = 0 ;i < kseq; i++) {
-        for(int j = 0; j < alignment_len; j++) {
+        for(int j = alignment_len-1; j >= 0; j--) {
             cout << alignment[i][j];
         }
         cout << endl;
