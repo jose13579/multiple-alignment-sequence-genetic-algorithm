@@ -14,12 +14,12 @@ vector<string> alpha;
 vector<int> alpha_len;
 vector< pair< int,vector<string> > > population;
 vector< pair< int, vector<string> > > best_population;
-vector< pair< int, vector<string> > > wortst_population;
+vector< pair< int, vector<string> > > worst_population;
 
 int alignment_len = 0;
 int kseq;
 
-//por recomendaçao do paper o valor do mehlor fator pode ser entre 1.2 a 1.5
+// the paper recommends a value in the range between 1.2 a 1.5
 float fator = 1.2;
 int populationSize = 200;
 int generations = 1000;
@@ -34,8 +34,14 @@ float decrease_search_ratio = 0.8;
 
 Score *score;
 
-vector<int> randomgenerator(int size, int new_size){
-	
+void inline printv(const char s[]) {
+    #ifdef VERBOSE
+    cout << s << endl;
+    #endif
+}
+
+vector<int> randomgenerator(int size, int new_size)
+{
 	std::vector<int> question_numbers;
 	for (unsigned int i = 0; i < new_size; ++i)
    		 question_numbers.push_back(i);
@@ -69,7 +75,7 @@ string get_permutation(string i_sequence,int alignment_size,int new_alignment_si
 
 string add_gaps_end(string sequence, int max_size_sequence)
 {
-	cout<<"ADD GAPS END"<<endl;
+    printv("ADD GAPS END");
 	for(int i = 0;i<max_size_sequence;i++)
 		sequence += "-";
 	return sequence;
@@ -77,7 +83,7 @@ string add_gaps_end(string sequence, int max_size_sequence)
 
 string add_gaps_begin(string sequence, int max_size_sequence)
 {
-	cout<<"ADD GAPS BEGIN"<<endl;
+    printv("ADD GAPS BEGIN");
 	string gaps_sequence = "";
 	for(int i = 0;i<max_size_sequence;i++)
 		gaps_sequence += "-";
@@ -330,7 +336,7 @@ vector<string> mutation_remove_column(vector<string> individual)
 
 vector<string> mutation_remove_gap(vector<string> individual1)
 {
-	cout<<"MUTATION REMOVE GAP"<<endl;
+    printv("MUTATION REMOVE GAP");
 	string seq;
 	string beforeGap;
 	string afterGap;
@@ -338,7 +344,6 @@ vector<string> mutation_remove_gap(vector<string> individual1)
 	int gapIndex = 0;
 	
 	vector<string>	individual_removegap;
- 	//cout<<"individual mutation remove gap size: "<<individual1.size()<<endl;
 	//For each sequence, delete a gap
 	for(int i=0; i<individual1.size(); i++)
 	{
@@ -365,30 +370,30 @@ vector<string> mutation_remove_gap(vector<string> individual1)
 
 void mutation(vector<string> individual1)
 {	
-	cout<<"MUTATION"<<endl;
+    printv("MUTATION");
 	vector<string> individual_mutation;
 
 	float merge_space_operator_ratio = (float)(rand())/(float)(RAND_MAX);
-	cout<<"probabilistic merge space operator: "<<merge_space_operator_ratio<<endl;
+    printv("Probabilistic merge space operator: ");
 	if(merge_space_operator_ratio <= merge_space_ratio)
 		individual_mutation = merge_space_operator(individual1);
 	else
 	{
 		float change_space_operator_ratio = (float)(rand())/(float)(RAND_MAX);
-		cout<<"probabilistic change space operator: "<<change_space_operator_ratio<<endl;
+        printv("Probabilistic change space operator: ");
 		if(change_space_operator_ratio <= change_space_ratio)
 			individual_mutation = change_space_operator(individual1);
 		else
 		{
 			float decrease_search_space_ratio = (float)(rand())/(float)(RAND_MAX);
-			cout<<"probabilistic decrease search space: "<<decrease_search_space_ratio<<endl;
+            printv("Probabilistic decrease space operator: ");
 			if(decrease_search_space_ratio <= decrease_search_ratio)
 				individual_mutation = decrease_search_space(individual1);
 			else
 				individual_mutation = mutation_remove_gap(individual1);
 		}
 	}
-	wortst_population.push_back(std::make_pair(0,mutation_remove_column(individual_mutation)));
+	worst_population.push_back(std::make_pair(0,mutation_remove_column(individual_mutation)));
 }
 
 
@@ -412,7 +417,7 @@ string replace(string word, string target, string replacement){
 
 void crossover(vector<string> individual1, vector<string> individual2)
 {
-	cout<<"CROSSOVER"<<endl;
+    printv("CROSSOVER");
 	//srand(time(NULL));
 
 	/*cout<<"IMPRIMIR INDIVIDUOS"<<endl;
@@ -440,7 +445,7 @@ void crossover(vector<string> individual1, vector<string> individual2)
 	vector<string> new_individual2_right;
 
 	int random_vertical= (rand()%individual1.size())+1;
-	cout<<"random vertical: "<<random_vertical<<endl;
+    printv("Random vertical: ");
 
 	int max_size_new_seq_indiv1_left = 0;
 	int max_size_new_seq_indiv1_right = 0;
@@ -560,7 +565,9 @@ void crossover(vector<string> individual1, vector<string> individual2)
 		gaps_new_individual2_right.push_back(sequence_individual_right);
 	}
 
-	cout<<"IMPRIMIR INDIVIDUOS VERTICALES LEFT RIGHT"<<endl;
+    
+    #ifdef VERBOSE
+	cout<<"PRINT VERTICAL INDIVIDUALS LEFT RIGHT"<<endl;
 
 	for(int i = 0;i<gaps_new_individual1_left.size();i++)
 		cout<<gaps_new_individual1_left[i]<<endl;
@@ -574,6 +581,7 @@ void crossover(vector<string> individual1, vector<string> individual2)
 	for(int i = 0;i<gaps_new_individual2_right.size();i++)
 		cout<<gaps_new_individual2_right[i]<<endl;
 	cout<<endl;
+    #endif
 
 	//add offprint1 and offprint2 to population
 	//offprint2
@@ -589,7 +597,8 @@ void crossover(vector<string> individual1, vector<string> individual2)
 		string sequ_offprint1 = gaps_new_individual2_left[i]+gaps_new_individual1_right[i];
 		new_individual2.push_back(sequ_offprint1);
 	}
-
+    
+    #ifdef VERBOSE
 	cout<<"IMPRIMIR INDIVIDUOS VERTICALES"<<endl;
 	for(int i = 0;i<new_individual1.size();i++)
 		cout<<new_individual1[i]<<endl;
@@ -598,22 +607,27 @@ void crossover(vector<string> individual1, vector<string> individual2)
 	for(int i = 0;i<new_individual2.size();i++)
 		cout<<new_individual2[i]<<endl;
 	cout<<endl;
+    #endif
 
 	//mutation
 	float indiv1_mutation_ratio = (float)(rand())/(float)(RAND_MAX);
+    #ifdef VERBOSE
 	cout<<"individuo1 mutation ratio vertical: "<<indiv1_mutation_ratio<<endl;
+    #endif
 
 	if(indiv1_mutation_ratio<= mutation_ratio)
 		mutation(mutation_remove_column(new_individual2));
 	else
-		wortst_population.push_back(std::make_pair(0,mutation_remove_column(new_individual2)));
+		worst_population.push_back(std::make_pair(0,mutation_remove_column(new_individual2)));
 
 	float indiv2_mutation_ratio = (float)(rand())/(float)(RAND_MAX);
+    #ifdef VERBOSE
 	cout<<"individuo2 mutation ratio vertical: "<<indiv2_mutation_ratio<<endl;
+    #endif
 	if(indiv2_mutation_ratio<= mutation_ratio)
 		mutation(mutation_remove_column(new_individual1));
 	else
-		wortst_population.push_back(std::make_pair(0,mutation_remove_column(new_individual1)));
+		worst_population.push_back(std::make_pair(0,mutation_remove_column(new_individual1)));
 }
 
 vector<string> ruleta()
@@ -631,24 +645,29 @@ vector<string> ruleta()
 void elitism()
 {
 	sort(population.begin(), population.end());
-
+    
+    #ifdef VERBOSE
 	cout<<"size population begin: "<<population.size()<<endl;
+    #endif
 	for(int i = 0; i<elitism_rate*populationSize;i++)
 	{
-		cout<<"1 population[i].first: "<<endl;
+        printv("1 population[i].first: ");
 		best_population.push_back(std::make_pair(population[i].first,population[i].second));
 	}
-
-	cout<<"BEST POPULATION"<<endl;
+    
+    #ifdef VERBOSE
+    cout << "BEST POPULATION" << endl;
 	for(int i = 0;i<best_population.size();i++)
 	{
 		vector<string> v = best_population[i].second;
+        
 		for(int j = 0;j<v.size();j++)
 		{
 			cout<<v[j]<<endl;
 		}
-		cout<<"best population: "<<best_population[i].first<<endl;
+		cout<<"best population: "<<best_population[i].first<<endl;  
 	}
+    #endif
 	
 	int size_new_population = elitism_rate*populationSize;
 	//cout<<"size_new_population"<<size_new_population<<endl;
@@ -658,7 +677,9 @@ void elitism()
 		vector<string> new_individuals2 = ruleta();
 
 		float new_crossover_ratio = (float)(rand())/(float)(RAND_MAX);
+        #ifdef VERBOSE
 		cout<< "new_crossover_ratio: " <<new_crossover_ratio<<endl;
+        #endif
 		if(new_crossover_ratio <= crossover_ratio)
 		{		
 			crossover(new_individuals,new_individuals2);
@@ -666,7 +687,9 @@ void elitism()
 		}
 		
 		float new_mutation_ratio = (float)(rand())/(float)(RAND_MAX);
+        #ifdef VERBOSE
 		cout<< "new_mutation_ratio: " <<new_mutation_ratio<<endl;
+        #endif
 		if(new_mutation_ratio <= mutation_ratio)
 		{
 			mutation(new_individuals);
@@ -674,7 +697,9 @@ void elitism()
 		}
 
 		float new_mutation_ratio2 = (float)(rand())/(float)(RAND_MAX);
+        #ifdef VERBOSE
 		cout<< "new_mutation_ratio2: " <<new_mutation_ratio2<<endl;
+        #endif
 		if(new_mutation_ratio2 <= mutation_ratio)
 		{
 			mutation(new_individuals2);
@@ -684,10 +709,10 @@ void elitism()
 
 	population.clear();
 	population = best_population;
-	for(int i=0; i<wortst_population.size(); i++)
-		population.push_back(std::make_pair(wortst_population[i].first,wortst_population[i].second));
+	for(int i=0; i<worst_population.size(); i++)
+		population.push_back(std::make_pair(worst_population[i].first,worst_population[i].second));
 	best_population.clear();
-	wortst_population.clear();
+	worst_population.clear();
 }
 
 int evaluateFitness(int objectiveFitness)
@@ -696,7 +721,9 @@ int evaluateFitness(int objectiveFitness)
 	{
 		int individualFitness = population[i].first;
 		int ind_individualFitness = i;
+        #ifdef VERBOSE
 		cout<<"individuo Fitness: "<<individualFitness<<" objectiveFitness: "<<objectiveFitness<<endl;
+        #endif
 		if(individualFitness < objectiveFitness)
 			return i;
 	}
@@ -790,7 +817,9 @@ void generateInitialPopulation()
 	int new_alignment_size = 0;
 
 	new_alignment_size = ceil(max_sequence_size *fator);
+    #ifdef VERBOSE
 	cout<< max_sequence_size << " "<<fator<<" "<< new_alignment_size << endl;
+    #endif
 
 	string permutation;
 	
@@ -801,11 +830,15 @@ void generateInitialPopulation()
 		for (int i=0; i<kseq; i++)
 		{
 			permutation = get_permutation(alpha[i],alpha_len[i],new_alignment_size);
+            #ifdef VERBOSE
 			cout << permutation;
 			cout<<endl;
+            #endif
 			l_permutation.push_back(permutation);
 		}
+        #ifdef VERBOSE
 		cout<<endl;
+        #endif
 		population.push_back(std::make_pair(0,mutation_remove_column(l_permutation)));
 	}
 }
@@ -818,7 +851,6 @@ int main(void) {
 	int alignment_len;
 	string sequence;
 	unsigned timeit = (unsigned)(time(NULL));
-	cout<<timeit<<endl;
 	std::srand(timeit);
 	double m,M,g;
 
@@ -836,16 +868,21 @@ int main(void) {
 
 	generateInitialPopulation();
 
-        int objetive_function = star();
-	cout<<"objetive_function "<<objetive_function<<endl;
+    int objetive_function = star();
+    
+    #ifdef VERBOSE
+	cout<<"Objetive Function "<<objetive_function<<endl;
+    #endif
 
 	int stop = 0;
 	t_start = rtclock();
 	cout << "Algorithm genetic Alignment:" << endl;
 	while(stop<generations)
 	{
-		cout<<(stop+1)<<" GERATIONS--------------------------------"<<endl;
-		cout<< "population size: " <<population.size()<<endl;
+        #ifdef VERBOSE
+		cout<<(stop+1)<<" GENERATIONS --------------------------------"<<endl;
+		cout<< "Population Size: " <<population.size()<<endl;
+        #endif
 
 		fitness();
 		int indx_best_score = evaluateFitness(objetive_function);
@@ -854,11 +891,11 @@ int main(void) {
 			int best_fitness = population[indx_best_score].first;
 			cout<<"=================================================="<<endl;
 			cout<<"=================================================="<<endl;
-			cout<<"MSA star alignment"<<endl;
+			cout<<"MSA Star Alignment"<<endl;
 			int first_fitness = star();
 			cout<<"Score (SP) Distance: "<<first_fitness<<endl;
 			cout<<"=================================================="<<endl;
-			cout<<"MSA genetic algorithm"<<endl;
+			cout<<"MSA Genetic Algorithm"<<endl;
 			for(int i = 0; i<population[indx_best_score].second.size();i++)
 				cout<<population[indx_best_score].second[i]<<endl;
 			cout<<"Best Score (SP) Distance: "<<best_fitness<<endl;
@@ -868,11 +905,12 @@ int main(void) {
 		}
 
 		elitism();
-		stop += 1;
+        if((stop+1) % 100 == 0) cout<<(stop+1)<<" GENERATIONS --------------------------------"<<endl;
+		stop++;
 	}
 	t_end = rtclock();
 	cout << "Time: " << fixed << setprecision(3) << t_end - t_start << " seconds" << endl;
-	cout<<"STOP"<<stop<<endl;
+	cout<<"Number of Generations: " << stop << endl;
 	if(stop == generations)
 	{
 		cout<<"=================================================="<<endl;
@@ -890,5 +928,6 @@ int main(void) {
 		cout<<"=================================================="<<endl;
 		cout<<"=================================================="<<endl;	
 	}
+    
     return 0;
 };
